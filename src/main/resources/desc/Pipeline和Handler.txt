@@ -1,0 +1,23 @@
+    Netty的ChannelPipeline和ChannelHandler机制类似于Servlet和Filter过滤器，实际上是职责连模式的一种变形，主要为了方便事件的拦截
+和用户业务逻辑的定制。
+    Netty的Channel过滤器实现原理与Servlet Filter机制一致，它将Channel的数据管道抽象为ChannelPipeline，消息在ChannelPipeline中
+流动和传递，ChannelPipeline持有I/O事件拦截器ChannelHandler的链表，由ChannelHandler对I/O事件进行拦截和处理，可以方便地通过新增
+和删除handler来实现不同的业务逻辑定制，不需要对已有的handler进行修改，能够实现对修改封闭和对扩展的支持。
+
+    ChannelPipeline是ChannelHandler的容器，它负责ChannelHandler的管理和时间拦截与调度
+
+    Netty中的事件分为inbound和outbound事件，inbound事件通常由I/O线程出发，例如TCP链路建立事件、关闭事件、读事件、异常通知事件等。
+由用户线程或者代码发起的I/O操作被称为outbound事件，事实上inbound和outbound是Netty自身根据事件在pipeline中的流向抽象出来的术语，
+在其他NIO框架中并没有这个概念。
+    pipeline中以fireXXX命名的方法都是从IO线程流向用户业务Handler的inbound事件。
+    pipeline本身并不直接进行I/O操作，在前面对Channel和Unsafe的介绍中我们知道最终都是由Unsafe和Channel来实现真正的I/O操作。
+pipeline负责将I/O事件通过TailHandler进行调度和传播，最终调用Unsafe的I/O方法进行I/O操作，它直接调用TailHandler中的方法，最终调用
+Unsafe的方法发起真正的操作，pipeline仅仅负责事件的调度。
+
+    Channelandler类似于Servlet的Filter过滤器，负责对I/O操作进行拦截和处理，它可以选择性地拦截和处理自己感兴趣的事件，也可以透传
+和终止事件的传递。
+    channelHandler支持注解，目前支持的注解有两种：
+        Sharable:多个ChannelPipeline公用一个ChannelHandler
+        Skip:被Skip注解的方法不会被调用，直接被忽略
+
+
