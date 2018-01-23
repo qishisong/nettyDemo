@@ -1,0 +1,31 @@
+Channel是Netty网络操作抽象类，它聚合了一组功能，包括但不限于网络的读写，客户端发起链接、主动关闭连接、关闭链路、获取通信双发的网络地址等。
+它也包含了Netty框架相关的一些功能，包括获取该channel的EventLoop，获取缓冲分配器ByteBufAllocator和pipeline等。
+
+原生Channel缺点：
+    1.JDK的SocketChannel和ServerSocketChannel没有统一的Channel接口供业务开发者使用，对于用户而言，没有统一的操作视图，使用起来不方便
+    2.JDK的SocketChannel和ServerSocketChannel的主要职责就是网络I/O操作，由于是SPI接口，由具体的虚拟机厂家来提供，所以用过继承SPI功能类
+    来扩展其功能难度很大
+    3.Netty的Channel需要能够跟Netty的整体脚骨融合在一起，例如I/O模型、棘突channelPipeline的定制模型，以及基于元数据描述配置化的TCP参数等，
+    这些JDK都没有提供，需要重新封装
+    4.自定义的Channel，功能实现更加灵活
+
+Netty的channel主要设计理念如下：
+    1.在channel接口层，采用Facade模式进行统一的封装，将网络I/O操作及其相关联的其他操作封装起来，统一对外提供。
+    2.Channel接口的定义尽量大而全，为SocketChannel和ServerSocketChannel提供统一的视图，由不同子类实现不同的功能，公共功能在抽象父类中
+    实现，最大程度上实现功能和接口的重用。
+    3.具体实现采用聚合而非包含的方式，将相关的功能类聚合在channel中，由channel统一负责分配和调度，功能实现更加灵活。
+
+ByteBuf的readBytes()方法的功能是将当前ByteBuf中的可写字节数组写入到指定的Channel中
+
+
+
+
+AdativeRecvByteBufAllocator是根据本次读取的实际字节数对下次接收缓冲区的容量进行动态调整。
+    使用动态缓冲区分配的优点如下：
+        1.Netty作为一个通用的NIO框架，并不对用户的应用 场景进行假设，因此根据上次实际读取的码流对下次接收Buffer缓冲区进行预测和
+        调整，能够最大限度满足不同行业的应用场景。
+        2.性能更高，容量过大会导致内存占用开销增加，后续的Buffer处理性能会下降，容量过小时需要更频繁地内存扩张来接收大的请求消息
+        ，同样都会导致性能下降。
+        3.更节约内存。
+
+

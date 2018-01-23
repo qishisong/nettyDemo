@@ -70,22 +70,13 @@ public abstract ByteBuf getBytes(int index, byte[] dst, int dstIndex, int length
     而无法回收ByteBuf所指的堆外内存。
 解决：
     Netty封装接的堆外内存是用UnpooledDirectByteBuf对象，Netty在每次创建一个UnpooledDirectByteBuf时，为了能够追踪到UnpooledDirectByteBuf
-    的垃圾回收，需要将该对象用一个虚拟引用指向它，将其注册到一条引用链中。然后需要将该引用对象与ByteBuf对象保存起来。
+    的垃圾回收，需要将该对象用一个虚拟引用指向它，将其注册到一条引用链中。然后需要将该引用对象与ByteBuf对象保存起来，
 ResourceLeakDetector分析
     内存检测级别
-       DISABLED: 不进行内存泄露的检测；
-       SIMPLE: 抽样检测，且只对部分方法调用进行记录，消耗较小，有泄漏时可能会延迟报告，默认级别；
-       ADVANCED: 抽样检测，记录对象最近几次的调用记录，有泄漏时可能会延迟报告；
-       PARANOID: 每次创建一个对象时都进行泄露检测，且会记录对象最近的详细调用记录。是比较激进的内存泄露检测级别，消耗最大，
-       建议只在测试时使用。
-
-DefaultResoureLeak继承PhantomReference（虚引用）
-原理：
-    利用虚引用跟踪ByteBuf的对象的回收，并在垃圾回收后检测ByteBuf的release方法是否有执行过，其实就是DefaultResoureLeak的close方法是否
-    执行过判断是否发生了内存泄露。同时利用装饰者模式，将用于跟踪回收的虚引用DefaultResoureLeak与具体的ByteBuf包装起来。
-装饰者类：WrappedByteBuf
-
-
+        DISABLED:禁止内存泄露检测
+        SIMPLE：默认的内出检测级别，以一个时间间隔，默认是每创建113个直接内存(对外内存)时检测一次
+        ADVANCED：每产生一个堆外内存时检测一次，目前ADVANCED和PARANOID在Netty中的实现等价，统一用ADVANCED来实现。
+        PARANOID
 
 
 
